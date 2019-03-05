@@ -11,16 +11,24 @@
             b-button.action-btn(variant="danger" size="lg"  v-on:click="stop")  Stop
         .simulator-top-right
           .simulator-top-right-container
-            .strategy(v-for="input in inputs")
-              .strategy-container
-                .name
-                  | {{input.strategy}}
+            .cycle-counter
+              .cycle-counter-container
+                .title
+                  | Cycle Time
+                .counter
                   | {{cycleTime}}
-                .simulation
-                  .simulation-container
-                    .simulation-container-inner
-                      .cycle(v-for="cycle in cycles")
-                        | {{cycle}}
+            .strategies
+              .strategy(v-for="input in inputs")
+                .strategy-container
+                  .name
+                    .name-container
+                      | {{input.strategy}}
+                  .simulation
+                    .simulation-container
+                      .simulation-container-inner
+                        .cycle(v-for="cycle in cycles")
+                          .vertical-center
+                            | {{cycle}}
     .simulator-bottom
       .simulator-bottom-container
         .simulator-table(v-if="simulationTable")
@@ -60,13 +68,23 @@ export default {
     })
   },
   methods: {
-    moveToCPU (ct) {
+    moveToCPU () {
       if (!this.inputs[0].simulations) {
         console.log('[warning]no simulation')
         return
       }
       if (this.inputs[0].simulations.length > this.cycleTime) {
-        this.cycles.push(this.inputs[0].simulations[ct])
+        console.log('thread:', this.inputs[0].simulations[this.cycleTime].moveToCPU)
+        if (this.inputs[0].simulations[this.cycleTime].moveToCPU >= 0) {
+          this.cycles.push(this.inputs[0].simulations[this.cycleTime].moveToCPU)
+        } else {
+          if (this.cycleTime === 0) {
+            this.cycles.push('N/A')
+          } else {
+            this.cycles.push(this.cycles[this.cycleTime - 1])
+          }
+        }
+
         this.cycleTime++
       } else {
         clearInterval(this.simulation)
@@ -81,7 +99,7 @@ export default {
     run () {
       console.log('run test')
       if (this.status !== 'run') {
-        this.simulation = setInterval(this.moveToCPU, 100, this.cycleTime)
+        this.simulation = setInterval(this.moveToCPU, 100)
         this.status = 'run'
       }
     },
@@ -108,6 +126,17 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss">
+$margin-dist: 0.5em;
+// $margin-dist1: 0.3em;
+$border-radius-val: 0.1em;
+
+.vertical-center {
+  position: absolute;
+  width: 100%;
+  top:50%;
+  transform: translateY(-50%);
+  text-align: center;
+}
 .simulator {
   position: relative;
   height: 100%;
@@ -135,18 +164,19 @@ export default {
           width: 15%;
           display: inline-box;
           .simulator-top-left-container {
-              position: relative;
-              height: 100%;
-              width: 100%;
-              display: flex;
-              flex-direction: column;
-              .action-btn {
-                display: inline-block;
-                font-size: 16px;
-                margin: 1em  1em;
-                cursor: pointer;
-              }
-           }
+            margin: $margin-dist;
+            position: relative;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            .action-btn {
+              display: inline-block;
+              font-size: 16px;
+              margin: 1em  1em;
+              cursor: pointer;
+            }
+          }
         }
 
         .simulator-top-right {
@@ -155,51 +185,85 @@ export default {
           width: 85%;
           display: inline-box;
           .simulator-top-right-container {
+            margin: $margin-dist;
             position: relative;
             height: 100%;
             width: 100%;
-            .strategy {
+            display: flex;
+            flex-direction: row;
+            .cycle-counter {
               position: relative;
               height: 100%;
-              width: 100%;
-              .strategy-container {
-                position: relative;
-                height: 100%;
-                width: 100%;
-                display: flex;
-                flex-direction: row;
-                .name {
-                  background-color: white;
-                  position: relative;
-                  height: 100%;
-                  width: 10%;
-                  display: inline-block;
-                  text-align: center;
+              width: 10%;
+              display: inline-block;
+              text-align: center;
+              .cycle-counter-container {
+                // margin: $margin-dist;
+                margin-left: $margin-dist;
+                margin-right: $margin-dist;
+                background-color: white;
+                border-radius: $border-radius-val $border-radius-val;
+                text-align: center;
+                .title {
+                  font-size: 2em;
                 }
-                .simulation {
-                  background-color: green;
+                .counter {
+                  font-size: 2em;
+                }
+              }
+            }
+            .strategies {
+              position: relative;
+              height: 100%;
+              width: 90%;
+
+              .strategy {
+                background-color: white;
+                position: relative;
+                min-height: 3em;
+                width: 95%;
+                display: inline-block;
+                .strategy-container {
+                  // margin: $margin-dist;
                   position: relative;
                   height: 100%;
-                  width: 90%;
-                  display: inline-block;
-
-                  .simulation-container {
+                  width: 100%;
+                  display: flex;
+                  flex-direction: row;
+                  overflow: hidden;
+                  .name {
                     position: relative;
-                    width: 36em;
-                    overflow-x: scroll;
-                    overflow-y: hidden;
-                    .simulation-container-inner {
-                      display: flex;
-                      flex-direction: row;
-                      .cycle {
-                        background-color: yellow;
-                        min-height: 2em;
-                        min-width: 2em;
-                        max-height: 2em;
-                        max-width: 2em;
-                        overflow: hidden;
-                        display: inline-block;
-                        margin-right:0.5em;
+                    min-height: 100%;
+                    min-width: 10%;
+                    display: inline-block;
+                    text-align: center;
+                  }
+                  .simulation {
+                    position: relative;
+                    height: 100%;
+                    width: 90%;
+                    display: inline-block;
+
+                    .simulation-container {
+                      position: relative;
+                      width: 36em;
+                      overflow-x: scroll;
+                      overflow-y: hidden;
+                      .simulation-container-inner {
+                        display: flex;
+                        flex-direction: row;
+                        .cycle {
+                          background-color: yellow;
+                          position: relative;
+                          height: 100%;
+                          min-height: 2em;
+                          min-width: 2em;
+                          max-height: 2em;
+                          max-width: 2em;
+                          overflow: hidden;
+                          display: inline-block;
+                          margin-right:0.5em;
+                        }
                       }
                     }
                   }
@@ -223,7 +287,7 @@ export default {
         width: 95%;
         text-align: center;
         background-color: white;
-        border-radius: 1em 1em;
+        border-radius: $border-radius-val $border-radius-val;
         overflow: hidden;
         .simulator-table {
           position: relative;

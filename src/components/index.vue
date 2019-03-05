@@ -5,10 +5,10 @@
       .simulator-top-container
         .simulator-top-left
           .simulator-top-left-container
-            button.btn Input
-            button.btn(v-on:click="run") Run
-            button.btn(v-on:click="pause") Pause
-            button.btn(v-on:click="stop")  Stop
+            b-button.action-btn(variant="danger" size="lg") Input
+            b-button.action-btn(variant="danger" size="lg"  v-on:click="run") Run
+            b-button.action-btn(variant="danger" size="lg"  v-on:click="pause") Pause
+            b-button.action-btn(variant="danger" size="lg"  v-on:click="stop")  Stop
         .simulator-top-right
           .simulator-top-right-container
             .strategy(v-for="input in inputs")
@@ -23,11 +23,11 @@
                         | {{cycle}}
     .simulator-bottom
       .simulator-bottom-container
-        | {{inputs}}
+        .simulator-table(v-if="simulationTable")
+          b-table(striped hover :items="simulationTable.threads", :fields="fields")
 </template>
 
 <script>
-
 const axios = require('axios')
 
 export default {
@@ -39,21 +39,34 @@ export default {
       cycles: [],
       simulation: null,
       cycleTime: 0,
-      status: 'stop'
+      status: 'stop',
+      simulationTable: null,
+      fields: ['id', 'state', 'priority', 'arriveTime', 'burstTime', 'waitingTime', 'turnAroundTime', 'execTime']
     }
   },
   mounted () {
     // console.log(tt)
     // Parse.txtParse(this.$route.path + 'static/test.txt')
     // Parse.txtParse('../../static/tt.json')
-    axios.get('../../static/test1.json').then(response => (
+    axios.get('../../static/test1.json').then((response) => {
       this.inputs.push(response.data)
-    ))
+      this.simulationTable = this.inputs[0]
+      this.simulationTable.threads.forEach((thread, id) => {
+        thread['id'] = id
+        thread['waitingTime'] = 0
+        thread['turnAroundTime'] = 0
+        thread['execTime'] = 0
+      })
+    })
   },
   methods: {
     moveToCPU (ct) {
-      if (this.inputs[0].simulation.length > this.cycleTime) {
-        this.cycles.push(this.inputs[0].simulation[ct])
+      if (!this.inputs[0].simulations) {
+        console.log('[warning]no simulation')
+        return
+      }
+      if (this.inputs[0].simulations.length > this.cycleTime) {
+        this.cycles.push(this.inputs[0].simulations[ct])
         this.cycleTime++
       } else {
         clearInterval(this.simulation)
@@ -100,7 +113,7 @@ export default {
   height: 100%;
   width: 100%;
   overflow: hidden;
-
+  background-color: black;
   .simulator-container {
     position: relative;
     height: 100%;
@@ -110,7 +123,6 @@ export default {
       position: relative;
       height: 40%;
       width: 100%;
-      background-color: blue;
       .simulator-top-container {
         position: relative;
         height: 100%;
@@ -120,7 +132,7 @@ export default {
         .simulator-top-left {
           position: relative;
           height: 100%;
-          width: 10%;
+          width: 15%;
           display: inline-box;
           .simulator-top-left-container {
               position: relative;
@@ -128,17 +140,10 @@ export default {
               width: 100%;
               display: flex;
               flex-direction: column;
-              .btn {
-                display: inline-block;
-                background-color: #4CAF50;
-                border: none;
-                color: white;
-                padding: 15px 32px;
-                text-align: center;
-                text-decoration: none;
+              .action-btn {
                 display: inline-block;
                 font-size: 16px;
-                margin: 4px 2px;
+                margin: 1em  1em;
                 cursor: pointer;
               }
            }
@@ -147,7 +152,7 @@ export default {
         .simulator-top-right {
           position: relative;
           height: 100%;
-          width: 90%;
+          width: 85%;
           display: inline-box;
           .simulator-top-right-container {
             position: relative;
@@ -209,11 +214,22 @@ export default {
       position: relative;
       height: 60%;
       width: 100%;
+      overflow-y: scroll;
+      overflow-x: hidden;
       .simulator-bottom-container {
+        margin: 1em auto;
         position: relative;
-        height: 100%;
-        width: 100%;
-        background-color: red;
+        min-height: 20em;
+        width: 95%;
+        text-align: center;
+        background-color: white;
+        border-radius: 1em 1em;
+        overflow: hidden;
+        .simulator-table {
+          position: relative;
+          height: 60%;
+          width: 100%;
+        }
       }
     }
   }

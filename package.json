@@ -12,13 +12,14 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
-    "element-ui": "^2.6.1",
+    "bootstrap": "^4.3.1",
+    "bootstrap-vue": "^2.0.0-rc.13",
     "node-sass": "^4.11.0",
     "pug": "^2.0.3",
     "pug-loader": "^2.4.0",
     "sass-loader": "^7.1.0",
     "style-loader": "^0.23.1",
-    "vue": "^2.5.2",
+    "vue": "^2.6.8",
     "vue-router": "^3.0.1"
   },
   "devDependencies": {

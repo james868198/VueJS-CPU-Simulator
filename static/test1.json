@@ -4,19 +4,31 @@
   "avgTurnaroundTime": 50,
   "threads": [
     {
-      "arriveTime": 1
+      "state": "waiting",
+      "priority": 1,
+      "arriveTime": 1,
+      "burstTime": 1
     },
     {
-      "arriveTime": 2
+      "state": "waiting",
+      "priority": 1,
+      "arriveTime": 2,
+      "burstTime": 3
     },
     {
-      "arriveTime": 4
+      "state": "waiting",
+      "priority": 1,
+      "arriveTime": 4,
+      "burstTime": 3
     },
     {
-      "arriveTime": 5
+      "state": "waiting",
+      "priority": 1,
+      "arriveTime": 5,
+      "burstTime": 2
     }
   ],
-  "simulation":[
+  "simulations":[
     {
       "cycleTime": 0,
       "moveToReadyList": [],
@@ -83,9 +95,9 @@
     {
       "cycleTime": 9,
       "moveToReadyList": [],
-      "moveToCPU": 0,
-      "moveToBlockList": 7,
-      "moveToFinishedList": 8
+      "moveToCPU": -1,
+      "moveToBlockList": -1,
+      "moveToFinishedList": -1
     },
     {
       "cycleTime": 10,

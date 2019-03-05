@@ -10,7 +10,7 @@
       "arriveTime": 2
     }
   ],
-  "simulation":[
+  "simulations":[
     {
       "cycleTime": 0,
       "moveToReadyList": [],

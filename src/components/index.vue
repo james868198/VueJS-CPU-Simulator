@@ -61,16 +61,7 @@ export default {
     // Parse.txtParse('../../static/tt.json')
     axios.get('../../static/test1.json').then((response) => {
       this.strategies.push(response.data)
-      const color = randomColor({count: this.strategies[0].threads.length})
-      // console.log(this.strategies, color)
-      this.strategies[0].threads.forEach((thread, id) => {
-        thread['id'] = id
-        thread['state'] = 'waiting'
-        thread['waitingTime'] = 0
-        thread['turnAroundTime'] = 0
-        thread['execTime'] = 0
-        thread['color'] = color[id]
-      })
+      this.initialThreads(0, true)
     })
   },
   methods: {
@@ -90,6 +81,7 @@ export default {
         this.status = 'stop'
         return
       }
+      console.log('test', simulations.length, this.cycleTime)
       // to ready
       simulations[this.cycleTime].moveToReadyList.forEach(threadId => {
         this.toReady(strategyId, threadId)
@@ -101,7 +93,7 @@ export default {
         this.toCPU(strategyId, simulations[this.cycleTime].moveToCPU)
       } else {
         // no change
-        if (this.cycleTime === 0) {
+        if (this.cycleTime === 0 || this.cycleTime === simulations.length - 1) {
           this.execThreads.push(-1)
         } else {
           this.execThreads.push(this.execThreads[this.cycleTime - 1])
@@ -109,16 +101,44 @@ export default {
       }
       // to block
       if (simulations[this.cycleTime].moveToBlockList >= 0) {
-        // thread move to CPU
+        // thread move to block
         this.toBlock(strategyId, simulations[this.cycleTime].moveToBlockList)
       }
-      // to block
+      // to finish
       if (simulations[this.cycleTime].moveToFinishedList >= 0) {
-        // thread move to CPU
+        // thread move to finish
         this.toFinish(strategyId, simulations[this.cycleTime].moveToFinishedList)
       }
+      // update waiting time and turnaroundTime
+      this.updateTATAbdWaitingTime(strategyId)
 
-      this.cycleTime++
+      // cycle counter
+      if (simulations.length - 1 <= this.cycleTime) {
+        console.log('simulation stop')
+        clearInterval(this.simulation)
+        this.status = 'stop'
+      } else {
+        this.cycleTime++
+      }
+    },
+    initialThreads (strategyId, setColor = null) {
+      if (!this.strategies[strategyId].threads) {
+        return
+      }
+      let color
+      if (setColor) {
+        color = randomColor({count: this.strategies[strategyId].threads.length})
+      }
+      this.strategies[strategyId].threads.forEach((thread, id) => {
+        thread['id'] = id
+        thread['state'] = 'waiting'
+        thread['waitingTime'] = 0
+        thread['turnAroundTime'] = 0
+        thread['execTime'] = 'N/A'
+        if (setColor) {
+          thread['color'] = color[id]
+        }
+      })
     },
     // update status
     toReady (strategyId, threadId) {
@@ -132,6 +152,17 @@ export default {
     },
     toFinish (strategyId, threadId) {
       this.strategies[strategyId].threads[threadId].state = 'finish'
+      this.strategies[strategyId].threads[threadId].execTime = this.cycleTime
+    },
+    updateTATAbdWaitingTime (strategyId) {
+      this.strategies[strategyId].threads.forEach(thread => {
+        if (thread.state !== 'waiting' && thread.state !== 'finish') {
+          thread.turnAroundTime++
+        }
+        if (thread.state === 'ready') {
+          thread.waitingTime++
+        }
+      })
     },
     // button events
     // input () {
@@ -140,7 +171,7 @@ export default {
     run () {
       console.log('run test')
       if (this.status !== 'run') {
-        this.simulation = setInterval(this.simulating, 100, 0)
+        this.simulation = setInterval(this.simulating, 500, 0)
         this.status = 'run'
       }
     },
@@ -159,6 +190,7 @@ export default {
         this.status = 'stop'
         this.cycleTime = 0
         this.execThreads = []
+        this.initialThreads(0)
       }
     }
   }

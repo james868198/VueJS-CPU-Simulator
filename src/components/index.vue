@@ -18,37 +18,40 @@
                 .counter
                   | {{cycleTime}}
             .strategies
-              .strategy(v-for="input in inputs")
+              .strategy(v-for="strategy in strategies")
                 .strategy-container
                   .name
                     .name-container
-                      | {{input.strategy}}
+                      | {{strategy.strategy}}
                   .simulation
                     .simulation-container
                       .simulation-container-inner
-                        .cycle(v-for="cycle in cycles")
-                          .vertical-center
-                            | {{cycle}}
+                        .cycle(v-for="thread in execThreads")
+                          .vertical-center(v-if="thread>=0")
+                            | t{{thread}}
+                          .vertical-center(v-else)
+                            | N/A
     .simulator-bottom
       .simulator-bottom-container
-        .simulator-table(v-if="simulationTable")
-          b-table(striped hover :items="simulationTable.threads", :fields="fields")
+        .simulator-table(v-if="strategies[tableId]")
+          b-table(striped hover :items="strategies[tableId].threads", :fields="fields")
 </template>
 
 <script>
 const axios = require('axios')
+const randomColor = require('randomcolor')
 
 export default {
   name: 'simulator',
   data () {
     return {
       msg: 'Welcome to Your Vue.js App',
-      inputs: [],
-      cycles: [],
+      strategies: [],
+      execThreads: [],
       simulation: null,
       cycleTime: 0,
       status: 'stop',
-      simulationTable: null,
+      tableId: 0,
       fields: ['id', 'state', 'priority', 'arriveTime', 'burstTime', 'waitingTime', 'turnAroundTime', 'execTime']
     }
   },
@@ -57,41 +60,79 @@ export default {
     // Parse.txtParse(this.$route.path + 'static/test.txt')
     // Parse.txtParse('../../static/tt.json')
     axios.get('../../static/test1.json').then((response) => {
-      this.inputs.push(response.data)
-      this.simulationTable = this.inputs[0]
-      this.simulationTable.threads.forEach((thread, id) => {
+      this.strategies.push(response.data)
+      const color = randomColor({count: this.strategies[0].threads.length})
+      // console.log(this.strategies, color)
+      this.strategies[0].threads.forEach((thread, id) => {
         thread['id'] = id
+        thread['state'] = 'waiting'
         thread['waitingTime'] = 0
         thread['turnAroundTime'] = 0
         thread['execTime'] = 0
+        thread['color'] = color[id]
       })
     })
   },
   methods: {
-    moveToCPU () {
-      if (!this.inputs[0].simulations) {
-        console.log('[warning]no simulation')
+    simulating (strategyId) {
+      if (!this.strategies[strategyId]) {
+        console.log('[warning] no strategy')
         return
       }
-      if (this.inputs[0].simulations.length > this.cycleTime) {
-        console.log('thread:', this.inputs[0].simulations[this.cycleTime].moveToCPU)
-        if (this.inputs[0].simulations[this.cycleTime].moveToCPU >= 0) {
-          this.cycles.push(this.inputs[0].simulations[this.cycleTime].moveToCPU)
-        } else {
-          if (this.cycleTime === 0) {
-            this.cycles.push('N/A')
-          } else {
-            this.cycles.push(this.cycles[this.cycleTime - 1])
-          }
-        }
-
-        this.cycleTime++
-      } else {
+      if (!this.strategies[strategyId].simulations) {
+        console.log('[warning] no simulation')
+        return
+      }
+      const simulations = this.strategies[strategyId].simulations
+      if (simulations.length <= this.cycleTime) {
+        console.log('simulation stop')
         clearInterval(this.simulation)
         this.status = 'stop'
+        return
       }
-    },
+      // to ready
+      simulations[this.cycleTime].moveToReadyList.forEach(threadId => {
+        this.toReady(strategyId, threadId)
+      })
+      // to CPU
+      if (simulations[this.cycleTime].moveToCPU >= 0) {
+        // thread move to CPU
+        this.execThreads.push(simulations[this.cycleTime].moveToCPU)
+        this.toCPU(strategyId, simulations[this.cycleTime].moveToCPU)
+      } else {
+        // no change
+        if (this.cycleTime === 0) {
+          this.execThreads.push(-1)
+        } else {
+          this.execThreads.push(this.execThreads[this.cycleTime - 1])
+        }
+      }
+      // to block
+      if (simulations[this.cycleTime].moveToBlockList >= 0) {
+        // thread move to CPU
+        this.toBlock(strategyId, simulations[this.cycleTime].moveToBlockList)
+      }
+      // to block
+      if (simulations[this.cycleTime].moveToFinishedList >= 0) {
+        // thread move to CPU
+        this.toFinish(strategyId, simulations[this.cycleTime].moveToFinishedList)
+      }
 
+      this.cycleTime++
+    },
+    // update status
+    toReady (strategyId, threadId) {
+      this.strategies[strategyId].threads[threadId].state = 'ready'
+    },
+    toCPU (strategyId, threadId) {
+      this.strategies[strategyId].threads[threadId].state = 'processing'
+    },
+    toBlock (strategyId, threadId) {
+      this.strategies[strategyId].threads[threadId].state = 'block'
+    },
+    toFinish (strategyId, threadId) {
+      this.strategies[strategyId].threads[threadId].state = 'finish'
+    },
     // button events
     // input () {
 
@@ -99,7 +140,7 @@ export default {
     run () {
       console.log('run test')
       if (this.status !== 'run') {
-        this.simulation = setInterval(this.moveToCPU, 100)
+        this.simulation = setInterval(this.simulating, 100, 0)
         this.status = 'run'
       }
     },
@@ -117,7 +158,7 @@ export default {
         this.simulation = null
         this.status = 'stop'
         this.cycleTime = 0
-        this.cycles = []
+        this.execThreads = []
       }
     }
   }

@@ -4,25 +4,21 @@
   "avgTurnaroundTime": 50,
   "threads": [
     {
-      "state": "waiting",
       "priority": 1,
       "arriveTime": 1,
       "burstTime": 1
     },
     {
-      "state": "waiting",
       "priority": 1,
       "arriveTime": 2,
       "burstTime": 3
     },
     {
-      "state": "waiting",
       "priority": 1,
       "arriveTime": 4,
       "burstTime": 3
     },
     {
-      "state": "waiting",
       "priority": 1,
       "arriveTime": 5,
       "burstTime": 2

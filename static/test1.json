@@ -6,22 +6,22 @@
     {
       "priority": 1,
       "arriveTime": 1,
-      "burstTime": 1
+      "totalBurstAndIOTime": 1
     },
     {
       "priority": 1,
       "arriveTime": 2,
-      "burstTime": 3
+      "totalBurstAndIOTime": 3
     },
     {
       "priority": 1,
       "arriveTime": 4,
-      "burstTime": 3
+      "totalBurstAndIOTime": 3
     },
     {
       "priority": 1,
       "arriveTime": 5,
-      "burstTime": 2
+      "totalBurstAndIOTime": 2
     }
   ],
   "simulations":[

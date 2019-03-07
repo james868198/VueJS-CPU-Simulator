@@ -5,7 +5,7 @@
       .simulator-top-container
         .simulator-top-left
           .simulator-top-left-container
-            b-button.action-btn(variant="danger" size="lg") Input
+            b-button.action-btn(variant="danger" size="lg"  v-on:click="") Input
             b-button.action-btn(variant="danger" size="lg"  v-on:click="run") Run
             b-button.action-btn(variant="danger" size="lg"  v-on:click="pause") Pause
             b-button.action-btn(variant="danger" size="lg"  v-on:click="stop")  Stop
@@ -22,11 +22,12 @@
                 .strategy-container
                   .name
                     .name-container
-                      | {{strategy.strategy}}
+                      .center
+                        | {{strategy.strategy}}
                   .simulation
-                    .simulation-container
-                      .simulation-container-inner
-                        .cycle(v-for="thread in execThreads")
+                    .simulation-container(ref="screen")
+                      .simulation-container-inner(ref="bar")
+                        .cycle.bg-danger(v-for="thread in execThreads")
                           .vertical-center(v-if="thread>=0")
                             | t{{thread}}
                           .vertical-center(v-else)
@@ -52,14 +53,15 @@ export default {
       cycleTime: 0,
       status: 'stop',
       tableId: 0,
-      fields: ['id', 'state', 'priority', 'arriveTime', 'burstTime', 'waitingTime', 'turnAroundTime', 'execTime']
+      fields: ['id', 'state', 'priority', 'arriveTime', 'totalBurstAndIOTime', 'waitingTime', 'turnAroundTime', 'execTime'],
+      cycleMicroSec: 1
     }
   },
   mounted () {
     // console.log(tt)
     // Parse.txtParse(this.$route.path + 'static/test.txt')
     // Parse.txtParse('../../static/tt.json')
-    axios.get('../../static/test1.json').then((response) => {
+    axios.get('../../static/test2.json').then((response) => {
       this.strategies.push(response.data)
       this.initialThreads(0, true)
     })
@@ -98,6 +100,7 @@ export default {
         } else {
           this.execThreads.push(this.execThreads[this.cycleTime - 1])
         }
+        this.scrollToRight()
       }
       // to block
       if (simulations[this.cycleTime].moveToBlockList >= 0) {
@@ -164,6 +167,13 @@ export default {
         }
       })
     },
+
+    // action
+    scrollToRight () {
+      const bar = this.$refs.bar[0]
+      const screen = this.$refs.screen[0]
+      screen.scrollLeft = bar.scrollWidth
+    },
     // button events
     // input () {
 
@@ -171,7 +181,7 @@ export default {
     run () {
       console.log('run test')
       if (this.status !== 'run') {
-        this.simulation = setInterval(this.simulating, 500, 0)
+        this.simulation = setInterval(this.simulating, this.cycleMicroSec, 0)
         this.status = 'run'
       }
     },
@@ -267,6 +277,7 @@ $border-radius-val: 0.1em;
             .cycle-counter {
               position: relative;
               height: 100%;
+              min-width: 6em;
               width: 10%;
               display: inline-block;
               text-align: center;
@@ -293,7 +304,8 @@ $border-radius-val: 0.1em;
               .strategy {
                 background-color: white;
                 position: relative;
-                min-height: 3em;
+                min-height: 5em;
+                height: 30%;
                 width: 95%;
                 display: inline-block;
                 .strategy-container {
@@ -306,10 +318,25 @@ $border-radius-val: 0.1em;
                   overflow: hidden;
                   .name {
                     position: relative;
-                    min-height: 100%;
-                    min-width: 10%;
+                    min-width: 3em;
+                    height: 100%;
+                    width: 10%;
                     display: inline-block;
                     text-align: center;
+                    font-size: 1.5em;
+
+                    .name-container {
+                      position: relative;
+                      height: 100%;
+                      width: 100%;
+                      .center {
+                        position: absolute;
+                        width: 100%;
+                        top:50%;
+                        transform: translateY(-50%);
+                        text-align: center;
+                      }
+                    }
                   }
                   .simulation {
                     position: relative;
@@ -319,20 +346,27 @@ $border-radius-val: 0.1em;
 
                     .simulation-container {
                       position: relative;
-                      width: 36em;
+                      height: 100%;
+                      width: 100%;
+                      padding-left:0.2em;
+                      padding-right:0.2em;
                       overflow-x: scroll;
                       overflow-y: hidden;
+                      &::-webkit-scrollbar { display: none; };
                       .simulation-container-inner {
+                        position: absolute;
+                        top:50%;
+                        transform: translateY(-50%);
                         display: flex;
                         flex-direction: row;
                         .cycle {
                           background-color: yellow;
                           position: relative;
                           height: 100%;
-                          min-height: 2em;
-                          min-width: 2em;
-                          max-height: 2em;
-                          max-width: 2em;
+                          width: 2em;
+                          min-height: 3.5em;
+                          min-width: 1.5em;
+
                           overflow: hidden;
                           display: inline-block;
                           margin-right:0.5em;

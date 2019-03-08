@@ -13,10 +13,14 @@
           .simulator-top-right-container
             .cycle-counter
               .cycle-counter-container
-                .title
-                  | Cycle Time
-                .counter
-                  | {{cycleTime}}
+                .cycle-counter-top
+                  .cycle-counter-top-container
+                    label.label Cycle Time
+                    .counter {{cycleTime}}
+                .cycle-counter-bottom
+                  .cycle-counter-bottom-container
+                    label.label Cycle Unit(ms):
+                    b-form-input.range-input(type="number"  v-model="cycleMicroSec" min="1" max="1000")
             .strategies
               .strategy(v-for="strategy in strategies")
                 .strategy-container
@@ -27,11 +31,18 @@
                   .simulation
                     .simulation-container(ref="screen")
                       .simulation-container-inner(ref="bar")
-                        .cycle.bg-danger(v-for="thread in execThreads")
-                          .vertical-center(v-if="thread>=0")
-                            | t{{thread}}
-                          .vertical-center(v-else)
-                            | N/A
+                        .cpu-thread(v-for="thread in execThreads")
+                          .cpu-thread-top.bg-danger
+                            .thread-id(v-if="thread.id>=0")
+                              | T{{thread.id}}
+                            .thread-id(v-else)
+                              | N/A
+                          .cpu-thread-bottom
+                            .cycle-time(v-if="thread.cycleTime%5 == 0")
+                              | {{thread.cycleTime}}
+                            .cycle-time(v-else)
+                              | -------
+
     .simulator-bottom
       .simulator-bottom-container
         .simulator-table(v-if="strategies[tableId]")
@@ -61,10 +72,7 @@ export default {
     // console.log(tt)
     // Parse.txtParse(this.$route.path + 'static/test.txt')
     // Parse.txtParse('../../static/tt.json')
-    axios.get('../../static/test2.json').then((response) => {
-      this.strategies.push(response.data)
-      this.initialThreads(0, true)
-    })
+    this.getJson('test20')
   },
   methods: {
     simulating (strategyId) {
@@ -89,19 +97,27 @@ export default {
         this.toReady(strategyId, threadId)
       })
       // to CPU
+      const thread = {
+        cycleTime: this.cycleTime,
+        id: -1
+      }
       if (simulations[this.cycleTime].moveToCPU >= 0) {
         // thread move to CPU
-        this.execThreads.push(simulations[this.cycleTime].moveToCPU)
+        thread.id = simulations[this.cycleTime].moveToCPU
         this.toCPU(strategyId, simulations[this.cycleTime].moveToCPU)
       } else {
         // no change
         if (this.cycleTime === 0 || this.cycleTime === simulations.length - 1) {
-          this.execThreads.push(-1)
+          // no
+          thread.id = -1
         } else {
-          this.execThreads.push(this.execThreads[this.cycleTime - 1])
+          thread.id = this.execThreads[this.cycleTime - 1].id
         }
-        this.scrollToRight()
       }
+      this.execThreads.push(thread)
+      console.log(this.execThreads)
+      this.scrollToRight()
+
       // to block
       if (simulations[this.cycleTime].moveToBlockList >= 0) {
         // thread move to block
@@ -123,6 +139,12 @@ export default {
       } else {
         this.cycleTime++
       }
+    },
+    getJson (fileName) {
+      axios.get('../../static/' + fileName + '.json').then((response) => {
+        this.strategies.push(response.data)
+        this.initialThreads(0, true)
+      })
     },
     initialThreads (strategyId, setColor = null) {
       if (!this.strategies[strategyId].threads) {
@@ -209,7 +231,7 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss">
-$margin-dist: 0.5em;
+$margin-dist: 0.7em;
 // $margin-dist1: 0.3em;
 $border-radius-val: 0.1em;
 
@@ -282,17 +304,42 @@ $border-radius-val: 0.1em;
               display: inline-block;
               text-align: center;
               .cycle-counter-container {
-                // margin: $margin-dist;
                 margin-left: $margin-dist;
                 margin-right: $margin-dist;
-                background-color: white;
-                border-radius: $border-radius-val $border-radius-val;
+                position: relative;
+                height: 100%;
+                max-width: 100%;
                 text-align: center;
-                .title {
-                  font-size: 2em;
+                font-size: 1.5em;
+                .cycle-counter-top {
+                  position: relative;
+                  height: 50%;
+                  width: 100%;
+                  .cycle-counter-top-container {
+
+                    .label {
+                      color: white;
+                    }
+                    .counter {
+                      background-color: white;
+                      border-radius: $border-radius-val $border-radius-val;
+                    }
+                  }
                 }
-                .counter {
-                  font-size: 2em;
+                .cycle-counter-bottom {
+                  position: relative;
+                  height: 50%;
+                  width: 100%;
+                  .cycle-counter-bottom-container {
+                    border-radius: $border-radius-val $border-radius-val;
+
+                    .label {
+                      color: white;
+                    }
+                    .range-input {
+
+                    }
+                  }
                 }
               }
             }
@@ -305,7 +352,7 @@ $border-radius-val: 0.1em;
                 background-color: white;
                 position: relative;
                 min-height: 5em;
-                height: 30%;
+                height: 40%;
                 width: 95%;
                 display: inline-block;
                 .strategy-container {
@@ -348,8 +395,8 @@ $border-radius-val: 0.1em;
                       position: relative;
                       height: 100%;
                       width: 100%;
-                      padding-left:0.2em;
-                      padding-right:0.2em;
+                      padding-left:0.1em;
+                      padding-right:0.1em;
                       overflow-x: scroll;
                       overflow-y: hidden;
                       &::-webkit-scrollbar { display: none; };
@@ -359,17 +406,44 @@ $border-radius-val: 0.1em;
                         transform: translateY(-50%);
                         display: flex;
                         flex-direction: row;
-                        .cycle {
-                          background-color: yellow;
+                        .cpu-thread {
                           position: relative;
                           height: 100%;
-                          width: 2em;
-                          min-height: 3.5em;
+                          width: 2.5em;
+                          min-height: 5em;
                           min-width: 1.5em;
 
                           overflow: hidden;
                           display: inline-block;
                           margin-right:0.5em;
+                          .cpu-thread-top{
+                            position: relative;
+                            height: 80%;
+                            min-height: 4em;
+                            width: 100%;
+
+                            .thread-id {
+                              position: relative;
+                              height: 100%;
+                              width: 100%;
+                              font-size: 1.2em;
+                              text-align: center;
+                            }
+                          }
+                          .cpu-thread-bottom{
+                            background-color: white;
+                            position: relative;
+                            height: 20%;
+                            min-height: 1em;
+                            width: 100%;
+                            .cycle-time {
+                              position: relative;
+                              height: 100%;
+                              width: 100%;
+                              font-size: 0.5em;
+                              text-align: center;
+                            }
+                          }
                         }
                       }
                     }

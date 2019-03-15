@@ -8,7 +8,7 @@
             b-button.action-btn(variant="danger" size="lg"  v-on:click="") Input
             b-button.action-btn(variant="danger" size="lg"  v-on:click="run") Run
             b-button.action-btn(variant="danger" size="lg"  v-on:click="pause") Pause
-            b-button.action-btn(variant="danger" size="lg"  v-on:click="stop")  Stop
+            b-button.action-btn(variant="danger" size="lg"  v-on:click="reset")  Reset
         .simulator-top-right
           .simulator-top-right-container
             .cycle-counter
@@ -62,7 +62,7 @@ export default {
       execThreads: [],
       simulation: null,
       cycleTime: 0,
-      status: 'stop',
+      status: 'ready',
       tableId: 0,
       fields: ['id', 'state', 'priority', 'arriveTime', 'totalBurstAndIOTime', 'waitingTime', 'turnAroundTime', 'execTime'],
       cycleMicroSec: 1
@@ -72,7 +72,7 @@ export default {
     // console.log(tt)
     // Parse.txtParse(this.$route.path + 'static/test.txt')
     // Parse.txtParse('../../static/tt.json')
-    this.getJson('test20')
+    this.getJson('RR_t5')
   },
   methods: {
     simulating (strategyId) {
@@ -96,6 +96,7 @@ export default {
       simulations[this.cycleTime].moveToReadyList.forEach(threadId => {
         this.toReady(strategyId, threadId)
       })
+
       // to CPU
       const thread = {
         cycleTime: this.cycleTime,
@@ -107,7 +108,7 @@ export default {
         this.toCPU(strategyId, simulations[this.cycleTime].moveToCPU)
       } else {
         // no change
-        if (this.cycleTime === 0 || this.cycleTime === simulations.length - 1) {
+        if (this.cycleTime === 0 || this.cycleTime === simulations.length - 1 || simulations[this.cycleTime].moveToFinishedList >= 0) {
           // no
           thread.id = -1
         } else {
@@ -123,11 +124,13 @@ export default {
         // thread move to block
         this.toBlock(strategyId, simulations[this.cycleTime].moveToBlockList)
       }
+
       // to finish
       if (simulations[this.cycleTime].moveToFinishedList >= 0) {
         // thread move to finish
         this.toFinish(strategyId, simulations[this.cycleTime].moveToFinishedList)
       }
+
       // update waiting time and turnaroundTime
       this.updateTATAbdWaitingTime(strategyId)
 
@@ -202,7 +205,7 @@ export default {
     // },
     run () {
       console.log('run test')
-      if (this.status !== 'run') {
+      if (this.status === 'puase' || this.status === 'ready') {
         this.simulation = setInterval(this.simulating, this.cycleMicroSec, 0)
         this.status = 'run'
       }
@@ -214,12 +217,12 @@ export default {
         this.status = 'pause'
       }
     },
-    stop () {
-      console.log('stop test')
+    reset () {
+      console.log('reset test')
       if (this.simulation) {
         clearInterval(this.simulation)
         this.simulation = null
-        this.status = 'stop'
+        this.status = 'ready'
         this.cycleTime = 0
         this.execThreads = []
         this.initialThreads(0)

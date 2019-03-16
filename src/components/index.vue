@@ -65,7 +65,7 @@ export default {
       status: 'ready',
       tableId: 0,
       fields: ['id', 'state', 'priority', 'arriveTime', 'totalBurstAndIOTime', 'waitingTime', 'turnAroundTime', 'execTime'],
-      cycleMicroSec: 1
+      cycleMicroSec: 500
     }
   },
   mounted () {
@@ -91,7 +91,7 @@ export default {
         this.status = 'stop'
         return
       }
-      console.log('test', simulations.length, this.cycleTime)
+      // console.log('simulations length:', simulations.length, 'cycles:', this.cycleTime)
       // to ready
       simulations[this.cycleTime].moveToReadyList.forEach(threadId => {
         this.toReady(strategyId, threadId)
@@ -116,7 +116,7 @@ export default {
         }
       }
       this.execThreads.push(thread)
-      console.log(this.execThreads)
+      // console.log(this.execThreads)
       this.scrollToRight()
 
       // to block
@@ -204,17 +204,17 @@ export default {
 
     // },
     run () {
-      console.log('run test')
-      if (this.status === 'puase' || this.status === 'ready') {
+      console.log('run simulation')
+      if (this.status === 'ready') {
         this.simulation = setInterval(this.simulating, this.cycleMicroSec, 0)
         this.status = 'run'
       }
     },
     pause () {
-      console.log('pause test')
+      console.log('pause simulation')
       if (this.status === 'run') {
         clearInterval(this.simulation)
-        this.status = 'pause'
+        this.status = 'ready'
       }
     },
     reset () {

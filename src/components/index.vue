@@ -5,10 +5,11 @@
       .simulator-top-container
         .simulator-top-left
           .simulator-top-left-container
-            b-button.action-btn(variant="danger" size="lg"  v-on:click="") Input
+            b-button.action-btn(variant="danger" size="lg"  @click="$refs.myFiles.click()") Input
             b-button.action-btn(variant="danger" size="lg"  v-on:click="run") Run
             b-button.action-btn(variant="danger" size="lg"  v-on:click="pause") Pause
             b-button.action-btn(variant="danger" size="lg"  v-on:click="reset")  Reset
+            input( type="file" ref="myFiles"  @change="previewFiles" )
         .simulator-top-right
           .simulator-top-right-container
             .cycle-counter
@@ -65,16 +66,35 @@ export default {
       status: 'ready',
       tableId: 0,
       fields: ['id', 'state', 'priority', 'arriveTime', 'totalBurstAndIOTime', 'waitingTime', 'turnAroundTime', 'execTime'],
-      cycleMicroSec: 500
+      cycleMicroSec: 500,
+      files: []
     }
   },
   mounted () {
     // console.log(tt)
     // Parse.txtParse(this.$route.path + 'static/test.txt')
     // Parse.txtParse('../../static/tt.json')
-    this.getJson('RR_t5')
+    // this.getJson('RR_t5')
   },
   methods: {
+    previewFiles () {
+      if (this.strategies.length >= 1) {
+        return
+      }
+      this.files = this.$refs.myFiles.files
+      console.log(this.files)
+
+      // const file = new Blob([JSON.stringify(this.files[0])], {type : "application/json"}),
+      // fr = new FileReader();
+      let reader = new FileReader()
+      let json
+      reader.onload = (e) => {
+        json = JSON.parse(e.target.result)
+        this.strategies.push(json)
+        this.initialThreads(0, true)
+      }
+      reader.readAsText(this.files[0])
+    },
     simulating (strategyId) {
       if (!this.strategies[strategyId]) {
         console.log('[warning] no strategy')
@@ -283,6 +303,9 @@ $border-radius-val: 0.1em;
               font-size: 16px;
               margin: 1em  1em;
               cursor: pointer;
+            }
+            input {
+              display: none;
             }
           }
         }

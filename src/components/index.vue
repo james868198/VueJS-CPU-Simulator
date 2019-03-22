@@ -70,22 +70,15 @@ export default {
       files: []
     }
   },
-  mounted () {
-    // console.log(tt)
-    // Parse.txtParse(this.$route.path + 'static/test.txt')
-    // Parse.txtParse('../../static/tt.json')
-    // this.getJson('RR_t5')
-  },
+  mounted () {},
   methods: {
     previewFiles () {
       if (this.strategies.length >= 1) {
-        return
+        this.strategies = []
       }
       this.files = this.$refs.myFiles.files
       console.log(this.files)
 
-      // const file = new Blob([JSON.stringify(this.files[0])], {type : "application/json"}),
-      // fr = new FileReader();
       let reader = new FileReader()
       let json
       reader.onload = (e) => {
